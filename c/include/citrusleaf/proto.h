@@ -216,6 +216,22 @@ typedef struct cl_msg_field_s {
 #define CL_MSG_FIELD_TYPE_DIGEST_RIPE_ARRAY 6
 #define CL_MSG_FIELD_TYPE_TRID 7
 #define CL_MSG_FIELD_TYPE_SCAN_OPTIONS 8
+
+#define CL_MSG_FIELD_TYPE_QUERY_OPTIONS 8
+
+// 20-29 RESERVED FOR SECONDARY INDEX
+#define CL_MSG_FIELD_TYPE_INDEX_NAME            21
+#define CL_MSG_FIELD_TYPE_INDEX_RANGE           22
+#define CL_MSG_FIELD_TYPE_INDEX_FILTER          23
+#define CL_MSG_FIELD_TYPE_INDEX_LIMIT           24
+#define CL_MSG_FIELD_TYPE_INDEX_ORDER_BY        25
+
+// 30-39 RESEVED FOR UDF
+#define CL_MSG_FIELD_TYPE_UDF_FILENAME          30
+#define CL_MSG_FIELD_TYPE_UDF_FUNCTION          31
+#define CL_MSG_FIELD_TYPE_UDF_ARGLIST           32
+#define CL_MSG_FIELD_TYPE_UDF_OP                33
+
 	uint32_t field_sz; // get the data size through the accessor function, don't worry, it's a small macro
 	uint8_t type;
 	uint8_t data[];

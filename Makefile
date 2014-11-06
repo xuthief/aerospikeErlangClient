@@ -35,6 +35,7 @@ C_INCL = ./c/include
 DIR_SRC = ./src
 C_DIR_OBJ = ./c/obj/native
 C_DIR_SRC = ./c/src
+C_DIR = ./c
 ER_DIR_OBJ = ./obj
 ER_DIR_SRC = ./src
 ER_ERL_DIR = .
@@ -95,7 +96,7 @@ CFLAGS_NATIVE = -g -fno-common -fno-strict-aliasing -rdynamic  -Wextra $(AS_CFLA
 
 all: compile
        
-compile:       $(TARGET_D) $(ERL_BEAM_OBJECTS) $(ERL_BEAM_EXAMPLE_OBJECTS)
+compile: makec $(TARGET_D) $(ERL_BEAM_OBJECTS) $(ERL_BEAM_EXAMPLE_OBJECTS)
 	cp ./*.erl ./ebin
 	cp ./*.beam ./ebin
 examples: $(ERL_BEAM_EXAMPLE_OBJECTS) $(ERL_BEAM_OBJECTS)
@@ -126,5 +127,9 @@ clean:
 	/bin/rm -rf $(SONAME)
 	/bin/rm -rf $(ERL_BEAM_OBJECTS)
 	/bin/rm -rf $(ERL_BEAM_EXAMPLE_OBJECTS)
+	make clean -C $(C_DIR)
+
+makec:
+	make -C $(C_DIR)
 # ------------------------------------------
 #

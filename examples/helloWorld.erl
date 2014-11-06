@@ -29,7 +29,7 @@
 hello() ->
   io:format("Hello From the World of Erlang ~n"),
   %% Set the parms for attaching to a local Aerospike Server
-  Host = "127.0.0.1",  %% Assume a server is installed and running locally
+  Host = "10.37.129.7",  %% Assume a server is installed and running locally
                        %% ==>  /etc/init.d/citrusleaf start
   Port = 3000,
   NS = "test",

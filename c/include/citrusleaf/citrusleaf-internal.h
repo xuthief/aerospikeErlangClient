@@ -37,6 +37,133 @@
 extern "C" {
 #endif
 
+// 30-39 RESEVED FOR UDF
+#define CL_MSG_FIELD_TYPE_UDF_FILENAME          30
+#define CL_MSG_FIELD_TYPE_UDF_FUNCTION          31
+#define CL_MSG_FIELD_TYPE_UDF_ARGLIST           32
+
+/**
+ *  Byte Buffer.
+ */
+typedef struct as_buffer_s {
+
+    /**
+     *  Number of bytes allocated to the buffer
+     */
+    uint32_t capacity;
+    
+    /**
+     *  Number of bytes used
+     */                     
+    uint32_t size;          
+    
+    /**
+     *  Bytes of the buffer
+     */
+    uint8_t * data;
+    
+} as_buffer;
+
+/**
+ *  as_val types
+ */
+typedef enum as_val_t {
+    AS_UNDEF        = 0,
+    AS_UNKNOWN      = 0,    //<! @deprecated
+    AS_NIL          = 1,
+    AS_BOOLEAN      = 2,
+    AS_INTEGER      = 3,
+    AS_STRING       = 4,
+    AS_LIST         = 5,
+    AS_MAP          = 6,
+    AS_REC          = 7,
+    AS_PAIR         = 8,
+    AS_BYTES        = 9,
+    AS_VAL_T_MAX
+} __attribute__((packed)) as_val_t;
+
+/**
+ *  Represents a value
+ *  @ingroup aerospike_t
+ */
+typedef struct as_val_s {
+    /**
+     *  Value type
+     */
+    enum as_val_t type;
+
+    /**
+     *  Value can be freed.
+     *  Should be false for stack allocated values.
+     */
+    bool free;
+
+    /**
+     *  Reference count
+     *  Values are ref counted.
+     *  To increment the count, use `as_val_reserve()`
+     */
+    cf_atomic32 count;
+
+} as_val;
+
+typedef struct as_string_s {
+
+    /**
+     *  @private
+     *  as_boolean is a subtype of as_val.
+     *  You can cast as_boolean to as_val.
+     */
+    as_val _;
+
+    /**
+     *  If true, then `as_string.value` can be freed.
+     */
+    bool free;
+
+    /**
+     *  The string value.
+     */
+    char * value;
+
+    /**
+     *  The length of the string.
+     */
+    size_t len;
+
+} as_string;
+
+/**
+ *  The length of the string
+ *
+ *  @param string The string to get the length of. 
+ *
+ *  @return the length of the string in bytes.
+ *
+ *  @relatesalso as_string
+ */
+size_t as_string_len(as_string * string);
+
+/**
+ *  Get the string value. If string is NULL, then return the fallback value.
+ *
+ *  @relatesalso as_string
+ */
+static inline char * as_string_getorelse(const as_string * string, char * fallback)
+{
+    return string ? string->value : fallback;
+}
+
+/**
+ *  Get the string value.
+ *  @deprecated Use as_string_get() instead
+ *
+ *  @relatesalso as_string
+ */
+static inline char * as_string_tostring(const as_string * string)
+{
+    return as_string_getorelse(string, NULL);
+}
 
 // citrusleaf.c used by cl_batch
 int
@@ -53,6 +180,8 @@ cl_set_value_particular(cl_msg_op *op, cl_bin *value);
 
 extern shash		  		*g_cl_async_hashtab;
 
+typedef struct as_call_s as_call;
+
 typedef struct cl_async_work {
 	uint64_t	trid;		//Transaction-id of the submitted work
 	uint64_t	deadline;	//Deadline time for this work item
@@ -64,6 +193,11 @@ typedef struct cl_async_work {
 
 int cl_del_node_asyncworkitems(void *key, void *value, void *clnode);
 
+struct as_call_s {
+    as_string * file;
+    as_string * func;
+    as_buffer * args;
+};
 
 // scan fields
 // left-to-right bits
@@ -117,7 +251,7 @@ citrusleaf_info_host_limit(struct sockaddr_in *sa_in, char *names, char **values
 int
 cl_compile(uint info1, uint info2, uint info3, const char *ns, const char *set, const cl_object *key, const cf_digest *digest,
 	cl_bin *values, cl_operator operator, cl_operation *operations, int n_values,  
-	uint8_t **buf_r, size_t *buf_sz_r, const cl_write_parameters *cl_w_p, cf_digest *d_ret, uint64_t trid, cl_scan_param_field *scan_field);
+	uint8_t **buf_r, size_t *buf_sz_r, const cl_write_parameters *cl_w_p, cf_digest *d_ret, uint64_t trid, cl_scan_param_field *scan_field, as_call * call, uint8_t udf_type);
 
 int
 cl_parse(cl_msg *msg, uint8_t *buf, size_t buf_len, cl_bin **values_r, cl_operation **operations_r, 

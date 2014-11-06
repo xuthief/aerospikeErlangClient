@@ -1,4 +1,9 @@
-tags
 */target/
 *.beam
 helloWorld.*
+*/tags
+tags
+*.o
+*bin
+*lib
+*obj

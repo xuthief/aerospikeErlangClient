@@ -103,3 +103,22 @@ cl_msg_swap_fields_and_ops(cl_msg *m)
 		op = cl_msg_op_get_next(op);
 	}
 }
+
+#define cf_swap_to_be32(_n) __cpu_to_be32(_n)
+#define cf_swap_to_le32(_n) __cpu_to_le32(_n)
+#define cf_swap_from_be32(_n) __be32_to_cpu(_n)
+#define cf_swap_from_le32(_n) __le32_to_cpu(_n)
+
+// Byte swap field from current machine byte order to network byte order (big endian).
+void
+cl_msg_swap_field_to_be(cl_msg_field *mf)
+{
+    mf->field_sz = cf_swap_to_be32(mf->field_sz);
+}
+
+// Byte swap field from network byte order (big endian) to current machine byte order.
+void
+cl_msg_swap_field_from_be(cl_msg_field *mf)
+{
+    mf->field_sz = cf_swap_from_be32(mf->field_sz);
+}
