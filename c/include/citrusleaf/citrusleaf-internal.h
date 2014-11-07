@@ -262,6 +262,74 @@ void
 dump_buf(char *info, uint8_t *buf, size_t buf_len);
 #endif
 
+/**
+ *  as_list is an interface for List based data types.
+ *
+ *  Implementations:
+ *  - as_arraylist
+ *
+ *  @extends as_val
+ *  @ingroup aerospike_t
+ */
+typedef struct as_list_s {
+
+    /**
+     *  @private
+     *  as_list is a subtype of as_val.
+     *  You can cast as_list to as_val.
+     */
+    as_val _;
+
+    /**
+     *  Pointer to the data for this list.
+     */
+    void * data;
+
+    /**
+     * Hooks for subtypes of as_list to implement.
+     */
+    const struct as_list_hooks_s * hooks;
+
+} as_list;
+
+typedef struct as_arraylist_s {
+
+    /**
+     *  @private
+     *  as_arraylist is an as_list.
+     *  You can cast as_arraylist to as_list.
+     */
+    as_list _;
+
+    /**
+     *  Number of elements to add, when capacity is reached.
+     *  If 0 (zero), then capacity can't be expanded.
+     */
+    uint32_t block_size;
+
+    /**
+     *  The total number elements allocated.
+     */
+    uint32_t capacity;
+
+    /**
+     *  The number of elements used.
+     */
+    uint32_t size;
+
+    /**
+     *  The elements of the list.
+     */
+    as_val ** elements;
+
+    /**
+     *  If true, then as_arraylist.elements will be freed when
+     *  as_arraylist_destroy() is called.
+     */
+    bool free;
+
+} as_arraylist;
+
 #ifdef __cplusplus
 } // end extern "C"
 #endif

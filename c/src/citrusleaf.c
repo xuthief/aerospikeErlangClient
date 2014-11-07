@@ -38,8 +38,28 @@
 #include "citrusleaf/proto.h"
 #include "citrusleaf/cf_hist.h"
 #include "citrusleaf/cf_socket.h"
+#include "citrusleaf/cf_byte_order.h"
 
 #include <signal.h>
+
+// ++==============++
+// || Fixed Values ||
+// ++==============++
+const char * DEFAULT_LSET_PACKAGE = "lset";
+
+// The names of the Lua Functions that implement Large Set Ops
+const char * LDT_SET_OP_ADD             = "add";
+const char * LDT_SET_OP_ADDALL          = "add_all";
+const char * LDT_SET_OP_GET             = "get";
+const char * LDT_SET_OP_EXISTS          = "exists";
+const char * LDT_SET_OP_SCAN            = "scan";
+const char * LDT_SET_OP_FILTER          = "filter";
+const char * LDT_SET_OP_REMOVE          = "remove";
+const char * LDT_SET_OP_DESTROY         = "destroy";
+const char * LDT_SET_OP_SIZE            = "size";
+const char * LDT_SET_OP_SET_CAPACITY    = "set_capacity";
+const char * LDT_SET_OP_GET_CAPACITY    = "get_capacity";
+const char * LDT_SET_OP_LDT_EXISTS      = "ldt_exists";
 
 // This is a per-transaction deadline kind of thing
 #define DEFAULT_TIMEOUT 200
@@ -1209,20 +1229,6 @@ static int
 do_the_full_monte_a(cl_cluster *asc, int info1, int info2, int info3, const char *ns, const char *set, const cl_object *key,
 	const cf_digest *digest, cl_bin **values, cl_operator operator, cl_operation **operations, int *n_values, 
 	uint32_t *cl_gen, const cl_write_parameters *cl_w_p, uint64_t *trid, char **setname_r
-    , as_call * call, uint32_t* cl_ttl);
-
-static int
-do_the_full_monte(cl_cluster *asc, int info1, int info2, int info3, const char *ns, const char *set, const cl_object *key,
-	const cf_digest *digest, cl_bin **values, cl_operator operator, cl_operation **operations, int *n_values, 
-	uint32_t *cl_gen, const cl_write_parameters *cl_w_p, uint64_t *trid, char **setname_r)
-{
-    return do_the_full_monte_a(asc, info1, info2, info3, ns, set, key, digest, values, operator, operations, n_values, cl_gen, cl_w_p, trid, setname_r, NULL, NULL);
-}
-
-static int
-do_the_full_monte_a(cl_cluster *asc, int info1, int info2, int info3, const char *ns, const char *set, const cl_object *key,
-	const cf_digest *digest, cl_bin **values, cl_operator operator, cl_operation **operations, int *n_values, 
-	uint32_t *cl_gen, const cl_write_parameters *cl_w_p, uint64_t *trid, char **setname_r
     , as_call * call, uint32_t* cl_ttl)
 {
 	int rv = -1;
@@ -1551,6 +1557,15 @@ Ok:
 
 	return(rv);
 }
+
+static int
+do_the_full_monte(cl_cluster *asc, int info1, int info2, int info3, const char *ns, const char *set, const cl_object *key,
+	const cf_digest *digest, cl_bin **values, cl_operator operator, cl_operation **operations, int *n_values, 
+	uint32_t *cl_gen, const cl_write_parameters *cl_w_p, uint64_t *trid, char **setname_r)
+{
+    return do_the_full_monte_a(asc, info1, info2, info3, ns, set, key, digest, values, operator, operations, n_values, cl_gen, cl_w_p, trid, setname_r, NULL, NULL);
+}
+
 
 
 //
@@ -2009,4 +2024,197 @@ void citrusleaf_print_stats(void)
 #ifdef DEBUG_HISTOGRAM
         cf_histogram_dump(cf_hist);
 #endif
+}
+
+static
+size_t pack_arg(unsigned char* buf, const cl_object *arg);
+
+extern cl_rv
+citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, const cl_bin *values, int n_values, const cl_write_parameters *cl_w_p)
+{
+    if (!g_initialized) return(-1);
+
+    	uint64_t trid=0;
+
+//    as_string ldt_bin;
+//    as_string_init(&ldt_bin, (char *)ldt, false);
+//
+//    as_arraylist arglist;
+//    as_arraylist_inita(&arglist, 2);
+//    as_arraylist_append_string(&arglist, &ldt_bin);
+//    as_val val;
+//    as_arraylist_append(&arglist, (as_val *)&val);
+
+    as_string file;
+    file.free = false;
+    file.value = DEFAULT_LSET_PACKAGE;
+    file.len = strlen(DEFAULT_LSET_PACKAGE);
+    //as_string_init(&file, , true /*ismalloc*/);
+
+    as_string func;
+    file.free = false;
+    file.value = LDT_SET_OP_ADD;
+    file.len = strlen(LDT_SET_OP_ADD);
+    //as_string_init(&func, (char *) LDT_SET_OP_ADD, true /*ismalloc*/);
+    
+    cl_object oldt;
+    citrusleaf_object_init_str(&oldt, ldt); 
+
+    size_t cap = (oldt.sz+8) + (values->object.sz+8);
+    size_t offset = 0;
+    char *buf = malloc(cap);
+    offset += pack_arg(buf, &oldt);
+    offset += pack_arg(buf, &values->object);
+
+    as_buffer args;
+    args.capacity = cap; 
+    args.size = offset;
+    args.data = buf;
+
+    as_call call = {
+        .file = &file,
+        .func = &func,
+        .args = &args
+    }; 
+
+	int rc = do_the_full_monte_a( asc, 0, CL_MSG_INFO2_WRITE, 0, ns, set, key, 0, 
+			(cl_bin **) &values, CL_OP_WRITE, 0, &n_values, NULL, cl_w_p, 
+			&trid, NULL, &call, NULL);
+
+    free(buf);
+    return rc;
+}
+
+size_t pack_arg(unsigned char* buf, const cl_object *arg)
+{
+    size_t offset = 0;
+
+    switch (arg->type) {
+        case CL_NULL:
+            *buf = 0xc0;
+            break;
+        case CL_INT:
+            {
+                int64_t val = arg->u.i64;
+                if (val >= 0) {
+                    if (val < 128) {
+                        *(buf++) = (uint8_t)val;
+                        offset += 1;
+                    } else if (val < 256) {
+                        *(buf++) = 0xcc;
+                        *(buf++) = (uint8_t)val;
+                        offset += 2;
+                    } else if (val < 65536) {
+                        *(buf++) = 0xcc;
+                        uint16_t swapped = cf_swap_to_be16((uint16_t)val);
+                        memcpy(buf, &swapped, 2);
+                        buf += 2;
+                        offset += 3;
+                    } else if (val < 4294967296) {
+                        *(buf++) = 0xce;
+                        uint32_t swapped = cf_swap_to_be32((uint32_t)val);
+                        memcpy(buf, &swapped, 4);
+                        buf += 4;
+                        offset += 5;
+                    } else {
+                        *(buf++) = 0xcf;
+                        uint64_t swapped = cf_swap_to_be64((uint64_t)val);
+                        memcpy(buf, &swapped, 8);
+                        buf += 8;
+                        offset += 9;
+                    }
+                } else {
+                    if (val >= -32) {
+                        *(buf++) = (uint8_t)(0xe0 | (val + 32));
+                        offset += 1;
+                    } else if (val >= -128) {
+                        *(buf++) = 0xd0;
+                        *(buf++) = (uint8_t)val;
+                        offset += 2;
+                    } else if (val >= -32768) {
+                        *(buf++) = 0xd1;
+                        uint16_t swapped = cf_swap_to_be16((uint16_t)val);
+                        memcpy(buf, &swapped, 2);
+                        buf += 2;
+                        offset += 3;
+                    } else if (val >= 0x80000000) {
+                        *(buf++) = 0xd2;
+                        uint32_t swapped = cf_swap_to_be32((uint32_t)val);
+                        memcpy(buf, &swapped, 4);
+                        buf += 4;
+                        offset += 5;
+                    } else {
+                        *(buf++) = 0xd3;
+                        uint64_t swapped = cf_swap_to_be64((uint64_t)val);
+                        memcpy(buf, &swapped, 8);
+                        buf += 8;
+                        offset += 9;
+                    }
+                }
+            }
+            break;
+        case CL_STR:
+            {
+                size_t length = arg->sz + 1;    // with cl type
+                if (length < 32) {
+                    *(buf++) = (uint8_t)(0xa0 | length);
+                    offset += 1;
+                } else if (length < 65536) {
+                    *(buf++) = 0xda;
+                    uint16_t swapped = cf_swap_to_be16((uint16_t)length);
+                    memcpy(buf, &swapped, 2);
+                    buf += 2;
+                    offset += 3;
+                } else {
+                    *(buf++) = 0xdb;
+                    uint32_t swapped = cf_swap_to_be32((uint32_t)length);
+                    memcpy(buf, &swapped, 4);
+                    buf += 4;
+                    offset += 5;
+                }
+                *(buf++) = (uint8_t)(CL_STR);
+                memcpy(buf, arg->u.str, arg->sz);
+                offset += length;
+            }
+            break;
+        case CL_BLOB:
+            {
+                size_t length = arg->sz + 1;    // with cl type
+                if (length < 32) {
+                    *(buf++) = (uint8_t)(0xa0 | length);
+                    offset += 1;
+                } else if (length < 65536) {
+                    *(buf++) = 0xda;
+                    uint16_t swapped = cf_swap_to_be16((uint16_t)length);
+                    memcpy(buf, &swapped, 2);
+                    buf += 2;
+                    offset += 3;
+                } else {
+                    *(buf++) = 0xdb;
+                    uint32_t swapped = cf_swap_to_be32((uint32_t)length);
+                    memcpy(buf, &swapped, 4);
+                    buf += 4;
+                    offset += 5;
+                }
+                *(buf++) = (uint8_t)(CL_BLOB);
+                memcpy(buf, arg->u.str, arg->sz);
+                offset += length;
+            }
+            break;
+            //            case AS_LIST :
+            //                rc = as_pack_list(pk, (as_list *) val);
+            //                break;
+            //            case AS_MAP :
+            //                rc = as_pack_map(pk, (as_map *) val);
+            //                break;
+            //            case AS_REC :
+            //                rc = as_pack_rec(pk, (as_rec *) val);
+            //                break;
+            //            case AS_PAIR :
+            //                rc = as_pack_pair(pk, (as_pair *) val);
+            //                break;
+        default :
+            break;
+    }
+    return offset;
 }

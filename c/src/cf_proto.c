@@ -104,11 +104,6 @@ cl_msg_swap_fields_and_ops(cl_msg *m)
 	}
 }
 
-#define cf_swap_to_be32(_n) __cpu_to_be32(_n)
-#define cf_swap_to_le32(_n) __cpu_to_le32(_n)
-#define cf_swap_from_be32(_n) __be32_to_cpu(_n)
-#define cf_swap_from_le32(_n) __le32_to_cpu(_n)
-
 // Byte swap field from current machine byte order to network byte order (big endian).
 void
 cl_msg_swap_field_to_be(cl_msg_field *mf)
