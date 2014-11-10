@@ -2030,7 +2030,7 @@ static
 size_t pack_arg(unsigned char* buf, const cl_object *arg);
 
 extern cl_rv
-citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, const cl_bin *values, int n_values, const cl_write_parameters *cl_w_p)
+citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, const cl_object *val, const cl_write_parameters *cl_w_p)
 {
     if (!g_initialized) return(-1);
 
@@ -2060,11 +2060,11 @@ citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_o
     cl_object oldt;
     citrusleaf_object_init_str(&oldt, ldt); 
 
-    size_t cap = (oldt.sz+8) + (values->object.sz+8);
+    size_t cap = (oldt.sz+8) + (val->sz+8);
     size_t offset = 0;
     char *buf = malloc(cap);
     offset += pack_arg(buf, &oldt);
-    offset += pack_arg(buf, &values->object);
+    offset += pack_arg(buf, val);
 
     as_buffer args;
     args.capacity = cap; 
@@ -2078,7 +2078,7 @@ citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_o
     }; 
 
 	int rc = do_the_full_monte_a( asc, 0, CL_MSG_INFO2_WRITE, 0, ns, set, key, 0, 
-			(cl_bin **) &values, CL_OP_WRITE, 0, &n_values, NULL, cl_w_p, 
+			NULL, CL_OP_WRITE, 0, 0, NULL, cl_w_p, 
 			&trid, NULL, &call, NULL);
 
     free(buf);

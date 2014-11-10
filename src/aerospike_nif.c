@@ -2224,7 +2224,7 @@ static ErlNifFunc nif_funcs[] = {
         {"shutdown",    1, shutdown1_nif},
         {"stopwatch",   1, stopwatch1_nif},
         {"shutdownAll", 0, shutdownAll0_nif}
-        ,{"lsetadd",    7, lset_add7_nif}
+        ,{"lsetAdd",    7, lset_add7_nif}
 };
 
 //

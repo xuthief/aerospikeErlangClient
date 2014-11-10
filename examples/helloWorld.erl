@@ -47,7 +47,7 @@ hello() ->
   io:format("Get Results(~p) ~n", [GetResults]),
 
   % Delete from the Aerospike Server
-  aerospike:delete( C, NS, Set, Key, 0 ),
+  % aerospike:delete( C, NS, Set, Key, 0 ),
 
   aerospike:shutdownAll(),
   io:format("Goodbye From the World of Erlang ~n"),

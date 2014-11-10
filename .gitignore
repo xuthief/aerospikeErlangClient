@@ -1,6 +1,6 @@
 */target/
 *.beam
-helloWorld.*
+*[Hh]elloWorld.*
 */tags
 tags
 *.o
