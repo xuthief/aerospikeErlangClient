@@ -448,6 +448,16 @@ write_fields(uint8_t *buf, const char *ns, int ns_len, const char *set, int set_
         cl_msg_swap_field_to_be(mf);
         mf = mf_tmp;
 
+        // Append arglist to message fields
+        len = call->args->size * sizeof(char);
+        mf->type = CL_MSG_FIELD_TYPE_UDF_ARGLIST;
+        mf->field_sz = len + 1;
+        memcpy(mf->data, call->args->data, len);
+
+        mf_tmp = cl_msg_field_get_next(mf);
+        cl_msg_swap_field_to_be(mf);
+        mf = mf_tmp;
+
     }
 
     if(udf_type) {
@@ -2027,14 +2037,15 @@ void citrusleaf_print_stats(void)
 }
 
 static
-size_t pack_arg(unsigned char* buf, const cl_object *arg);
+size_t pack_args(unsigned char* buf, size_t cnt, ...);
 
 extern cl_rv
-citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, const cl_object *val, const cl_write_parameters *cl_w_p)
+citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, const cl_object *pval, const cl_write_parameters *cl_w_p)
 {
     if (!g_initialized) return(-1);
 
     	uint64_t trid=0;
+        int n_bins = 0;
 
 //    as_string ldt_bin;
 //    as_string_init(&ldt_bin, (char *)ldt, false);
@@ -2052,23 +2063,22 @@ citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_o
     //as_string_init(&file, , true /*ismalloc*/);
 
     as_string func;
-    file.free = false;
-    file.value = LDT_SET_OP_ADD;
-    file.len = strlen(LDT_SET_OP_ADD);
+    func.free = false;
+    func.value = LDT_SET_OP_ADD;
+    func.len = strlen(LDT_SET_OP_ADD);
     //as_string_init(&func, (char *) LDT_SET_OP_ADD, true /*ismalloc*/);
     
     cl_object oldt;
     citrusleaf_object_init_str(&oldt, ldt); 
 
-    size_t cap = (oldt.sz+8) + (val->sz+8);
-    size_t offset = 0;
+    size_t cap = 8 + (oldt.sz+8) + (pval->sz+8);
+    size_t size = 0;
     char *buf = malloc(cap);
-    offset += pack_arg(buf, &oldt);
-    offset += pack_arg(buf, val);
+    size = pack_args(buf, 2, &oldt, pval);
 
     as_buffer args;
     args.capacity = cap; 
-    args.size = offset;
+    args.size = size;
     args.data = buf;
 
     as_call call = {
@@ -2077,8 +2087,11 @@ citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_o
         .args = &args
     }; 
 
-	int rc = do_the_full_monte_a( asc, 0, CL_MSG_INFO2_WRITE, 0, ns, set, key, 0, 
-			NULL, CL_OP_WRITE, 0, 0, NULL, cl_w_p, 
+    cf_digest digest;
+    citrusleaf_calculate_digest(set, key, &digest);
+
+	int rc = do_the_full_monte_a( asc, 0, CL_MSG_INFO2_WRITE, 0, ns, set, NULL, &digest, 
+			NULL, CL_OP_WRITE, 0, n_bins, NULL, cl_w_p, 
 			&trid, NULL, &call, NULL);
 
     free(buf);
@@ -2216,5 +2229,38 @@ size_t pack_arg(unsigned char* buf, const cl_object *arg)
         default :
             break;
     }
+    return offset;
+}
+
+size_t pack_args(unsigned char* buf, size_t cnt, ...)
+{
+    // args cnt
+    size_t offset = 0;
+    if (cnt < 16) {
+        *buf = (uint8_t)(0x90 | cnt);
+        offset += 1;
+    }
+    else if (cnt < 65536) {
+        *buf = 0xdc;
+        uint16_t swapped = cf_swap_to_be16((uint16_t)cnt);
+        memcpy(buf, &swapped, 2);
+        offset += 3;
+    } else {
+        *buf = 0xdd;
+        uint32_t swapped = cf_swap_to_be32((uint32_t)cnt);
+        memcpy(buf, &swapped, 4);
+        offset += 5;
+    }
+
+    // args
+    va_list args;
+    va_start(args, buf);     
+    int i;
+    for (i=0; i<cnt; i++) {
+        cl_object *pArg=va_arg(args, cl_object *);
+        offset += pack_arg(buf+offset, pArg);
+    }
+    va_end(args);
+
     return offset;
 }

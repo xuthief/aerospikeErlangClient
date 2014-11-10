@@ -110,7 +110,70 @@ do_example(config *c)
 	return(0);
 }
 
-
+int
+do_lset_example(config *c)
+{
+	int rv;
+	
+	// Put some test values
+	cl_object o_key;
+	citrusleaf_object_init_str(&o_key, "test-key");
+	cl_object o_val;
+	citrusleaf_object_init_str(&o_val, "lset value");
+    char ldt_name[] = "mylset";
+	
+	// set a non-default write parameter
+	cl_write_parameters cl_wp;
+	cl_write_parameters_set_default(&cl_wp);
+	cl_wp.timeout_ms = 1000;
+	
+	if (0 != (rv = citrusleaf_lset_add(c->asc, c->ns, c->set, &o_key, ldt_name, &o_val, &cl_wp))) {
+		fprintf(stderr, "citrusleaf lset add failed: error %d\n",rv);
+		return(-1);
+	}
+	fprintf(stderr, "citrusleaf lset add succeeded\n");
+	
+	// Get all the values in this key (enjoy the fine c99 standard)
+//	cl_bin *cl_v = 0;
+//	uint32_t generation;
+//	int 	cl_v_len;
+//	if (0 != (rv = citrusleaf_get_all(c->asc, c->ns, c->set, &o_key, &cl_v, &cl_v_len, c->timeout_ms, &generation))) {
+//		fprintf(stderr, "get after put failed, but there should be a key here - %d\n",rv);
+//		if (cl_v)	free(cl_v);
+//		return(-1);
+//	}
+//	fprintf(stderr, "get all returned %d bins\n",cl_v_len);
+//	for (int i=0;i<cl_v_len;i++) {
+//		fprintf(stderr, "%d:  bin %s ",i,cl_v[i].bin_name);
+//		switch (cl_v[i].object.type) {
+//			case CL_STR:
+//				fprintf(stderr, "type string: value %s\n", cl_v[i].object.u.str);
+//				break;
+//			case CL_INT:
+//				fprintf(stderr, "type int: value %"PRId64"\n",cl_v[i].object.u.i64);
+//				break;
+//			default:
+//				fprintf(stderr, "type unknown! (%d)\n",(int)cl_v[i].object.type);
+//				break;
+//		}
+//		// could have done this -- but let's free the objects in the bins later
+//		// citrusleaf_object_free(&cl_v[i].object);
+//	}
+//	if (cl_v)	{
+//		citrusleaf_bins_free(cl_v, cl_v_len);
+//		free(cl_v); // only one free for all bins
+//	}
+//	fprintf(stderr,"citrusleaf getall succeeded\n");
+//	
+//	// Delete the key you just set
+//	if (0 != (rv = citrusleaf_delete(c->asc, c->ns, c->set, &o_key, 0/*default write params*/))) {
+//		fprintf(stderr, "citrusleaf delete failed: error %d\n",rv);
+//		return(-1);
+//	}
+//	fprintf(stderr, "citrusleaf delete succeeded\n");
+	
+	return(0);
+}
 
 void usage(void) {
 	fprintf(stderr, "Usage example:\n");
@@ -214,7 +277,7 @@ main(int argc, char **argv)
 	citrusleaf_cluster_add_host(g_config.asc, g_config.host, g_config.port, 200 /*timeout*/);
 
 	// Make some example requests against the cluster
-	if (0 != do_example(&g_config)) {
+	if (0 != do_lset_example(&g_config)) {
 		fprintf(stderr, "example failed!\n");
 		return(-1);
 	}

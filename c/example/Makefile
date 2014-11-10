@@ -14,7 +14,7 @@ DIR_TARGET = .
 CC = gcc
 ARCH_NATIVE = $(shell uname -m)
 #CFLAGS_NATIVE = -g -march=native -fno-common -fomit-frame-pointer 
-CFLAGS_NATIVE = -g -fno-common -fomit-frame-pointer 
+CFLAGS_NATIVE = -g -fno-common -fomit-frame-pointer -O0
 CFLAGS_NATIVE += -fno-strict-aliasing -rdynamic -std=gnu99 -Wall 
 CFLAGS_NATIVE += -D_REENTRANT -D MARCH_$(ARCH_NATIVE)
 # CFLAGS_NATIVE += -O3
