@@ -84,7 +84,7 @@ LDFLAGS = -shared -Wl,-soname=$(SONAME)
 LDFLAGS += -L$(DIR_ERL)/lib/erl_interface-$(EIVER)/lib -L. -L/usr/lib/
 LDLIBS =  -lerl_interface -pthread -lssl -pthread -lrt -lcitrusleaf -lcrypto
 
-AS_CFLAGS = -D_FILE_OFFSET_BITS=64 -std=gnu99 -D_REENTRANT
+AS_CFLAGS = -D_FILE_OFFSET_BITS=64 -std=gnu99 -D_REENTRANT -w
 MARCH_NATIVE = $(shell uname -m)
 # ----------------------------------------------------------
 # Pick the right level of compile -- debug or optimize

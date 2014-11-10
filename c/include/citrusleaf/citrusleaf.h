@@ -628,7 +628,8 @@ citrusleaf_calculate_digest(const char *set, const cl_object *key, cf_digest *di
  *
  *	@ingroup ldt_operations
  */
-//cl_rv citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const cl_object *ldt, const cl_bin *bins, int n_bins, const cl_write_parameters *cl_w_p);
+cl_rv 
+citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, const cl_bin *values, int n_values, const cl_write_parameters *cl_w_p);
 
 /**
  *	Add a list of values into the lset.

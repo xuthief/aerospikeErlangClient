@@ -26,6 +26,7 @@
 // let the server returns CITRUSLEAF_FAIL_PARAMETER or similar on name size exceptions
 #define NSNAME_MAX NAMELEN_MAX
 #define SETNAME_MAX NAMELEN_MAX
+#define LDT_MAX NAMELEN_MAX
 
 // this is not the server limit, but limit in the cl_bin_s structure
 #define BINNAME_MAX 32
@@ -47,3 +48,4 @@ GW_RC gw_histogram_report(time_t *time_lapsed, char *writereport, size_t w_len, 
 GW_RC gw_stopwatch_start();
 GW_RC gw_stopwatch_stop(time_t *time_lapsed, int *nwrite, int *nread);
 GW_RC gw_stopwatch_report(time_t *time_lapsed, int *nwrite, int *nread);
+GW_RC gw_lset_add(int con_h, char *ns, char *set, cl_object *key, char *ldt, cl_object *val, cl_write_parameters *cl_w_p, int *cl_rc);

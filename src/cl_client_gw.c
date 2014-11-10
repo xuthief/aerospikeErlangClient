@@ -765,5 +765,61 @@ GW_RC gw_stopwatch_report(time_t *time_lapsed, int *nwrite, int *nread) {
         return GW_OK;
 } // end GW_RC gw_stopwatch_report()
 
+/**
+ * lset add to the Aerospike Server.  Call the C Citrusleaf Client to
+ * perform the write.
+ *
+ * Note that there are two different return codes -- one is for the gateway
+ * function (GW RC), which returns "error" up to the client if something
+ * really bad happens (usually, internally), and the other is for the
+ * Citrusleaf Client function (CL RC), which returns "citrusleaf_error".
+ * So, if nothing really terrible happens in the GW function, it always
+ * returns GW_OK, and any citrusleaf error code is passed along.
+ * If something really bad happens, then the citrusleaf code is ignored
+ * and the internal "error" is passed up.
+ */
+GW_RC gw_lset_add(int con_h, char *ns, char *set, cl_object *key, char* ldt, cl_object *val,
+     cl_write_parameters *cl_w_p, int *cl_rc)
+{
+  static char * meth = "gw_lset_add()";
+  if( TRA_ENTER )
+    fprintf(stderr,"%s[%s]:   \n", D_ENTER, meth  );
+
+  GW_RC con_validate_rc =  validate_con_h(con_h);
+  if (GW_OK != con_validate_rc) {
+    if( TRA_ERROR )
+      fprintf(stderr,"%s[%s]:ERROR(%d) \n", D_ENTER, meth, con_validate_rc );
+    return con_validate_rc;
+  }
+
+  config *my_config = g_config[con_h];
+
+  uint64_t start_time = 0;
+  if (g_want_histogram) {
+    start_time = cf_getms();
+  }
+
+  // Now we're including the Write Options (Jan 2013: tjl)
+  *cl_rc =
+    citrusleaf_lset_add(my_config->asc, ns, set, key, ldt, val, cl_w_p);
+
+  if (start_time)
+    cf_histogram_insert_data_point(g_write_histogram, start_time);
+
+  if(TRA_DEBUG) {
+    fprintf(stderr,"%s[%s]: Put Results(%d) <><><> g_nwrite before PUT(%d)",
+        D_DEBUG, meth, *cl_rc, g_nwrite );
+  }
+
+  if (g_want_stopwatch)
+    cf_atomic_int_incr(&g_nwrite);
+
+  if(TRA_DEBUG)
+    fprintf(stderr,":::  g_nwrite after PUT(%d)(<><><> \n", g_nwrite );
+
+  return GW_OK;
+} // end gw_put()
+
+
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<< END OF FILE >>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

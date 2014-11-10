@@ -23,6 +23,9 @@
 %% (*) delete/5:      Delete a specified KVS Record
 %% (*) histogram/1:   Start Histogram, or get HS Report
 %% (*) stopwatch/1:   Start, Stop the stopwatch, or get the SW Report
+%%
+%% (*) lset_add/7:    Write a Record to the Aerospike LDT set
+%%
 %% ===================================================================
 %% NOTES:
 %% (1) The Erlang Native Implemented Functions (NIF) work as follows:
@@ -50,7 +53,7 @@
 %% to any caller who wants to import us.
 -export([connect/0, connect/2, addhost/4, shutdown/1, shutdownAll/0,
 	clinfo/1, clinfo/2, init/0, put/6, get/6, getAll/5, delete/5,
-	histogram/1, stopwatch/1]).
+	histogram/1, stopwatch/1, lset_add/7]).
 
 %% Include our record definitions.
 -include("aerospike.hrl").
@@ -329,6 +332,37 @@ stopwatch( Command ) when Command == stop ->
 stopwatch( Command ) when Command == report ->
   io:format(">>> Stopwatch( report ):: ~n"),
   aerospike:stopwatch(report).
+
+%% -----------------------------------------------------------------------
+%% Name: lset_add(Connection, Namespace, Set, Key, Ldt, Values, Clwp )
+%% Description: Put values into the database
+%% Parameters:
+%%   Connection: the connection ID from the initial connect(Host, Port) call
+%%   Namespace: The Namespace into which this put value will be written
+%%       Note that Namespace is defined in the aerospike server config file
+%%       and that the Namespace "test" is a defined Namespace in the 
+%%       default /etc/citrusleaf.conf server config file.
+%%   Set: The Set name for this grouping of records
+%%   Key: The unique key (e.g. "abc") for this record
+%%   Value: The value (e.g. "abc") of this member in set
+%%   Clwp: Write Parameters (see documentation)
+%%   
+%% Usage:
+%%  Result = put(C, "testns", "myset", "mykey", "value1", clwp)
+%% Errors and Return Values:
+%% (*) 
+%%
+%% Notes:
+%% (1) Use the clwp record as Clwp. It is the  equivalent of
+%%     C cl_write_parameters.  Setting Clwp = 0 means to use the default
+%%     values.  (See Documentation)
+%% -----------------------------------------------------------------------
+lset_add(_C, _NameSpace, _Set, _Key, _Ldt, _Values, _Clwp) ->
+% io:format(">> put( C(~w) NS(~s) S(~s) K(~s) VAL(~w) CLWP(~w):: ~n",
+% [_C, _NameSpace, _Set, _Key, _Value, _Clwp ]),
+% aerospike:put(_C, _NameSpace, _Set, _Key, _Value, _Clwp).
+  'function_lset_add_not_loaded'. % This gets replaced by the NIF call on load
+
 
 %%%
 %%  >>>>>>>>>>>>>>  end Native Implemented Functions (NIFs) <<<<<<<<<<<<<<
