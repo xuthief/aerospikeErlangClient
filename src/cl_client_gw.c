@@ -821,5 +821,60 @@ GW_RC gw_lset_add(int con_h, char *ns, char *set, cl_object *key, char* ldt, cl_
 } // end gw_put()
 
 
+/**
+ * Get ALL of the bins from the record that corresponds to this specific key.
+ * Query the Citrusleaf C Client.
+ *
+ * Note that there are two different return codes -- one is for the gateway
+ * function (GW RC), which returns "error" up to the client if something
+ * really bad happens (usually, internally), and the other is for the
+ * Citrusleaf Client function (CL RC), which returns "citrusleaf_error".
+ * So, if nothing really terrible happens in the GW function, it always
+ * returns GW_OK, and any citrusleaf error code is passed along.
+ * If something really bad happens, then the citrusleaf code is ignored
+ * and the internal "error" is passed up.
+ */
+GW_RC gw_lset_scan(int con_h, char *ns, char *set, cl_object *key, char* ldt,
+    cl_bin **bins, int *n_bins, int timeout_ms, int *cl_rc)
+{
+  static char * meth = "gw_lset_scan()";
+  if( TRA_ENTER )
+    fprintf(stderr,"%s[%s]:   \n", D_ENTER, meth  );
+
+  GW_RC con_validate_rc =  validate_con_h(con_h);
+  if (GW_OK != con_validate_rc) {
+    if( TRA_DEBUG ) fprintf(stderr, "%s[%s]: Couldn't validate C(%d)\n",
+        D_DEBUG, meth, con_h );
+    return con_validate_rc;
+  }
+
+  config *my_config = g_config[con_h];
+
+  uint64_t start_time = 0;
+  if (g_want_histogram) {
+    start_time = cf_getms();
+  }
+
+  if( TRA_DEBUG ) fprintf(stderr, "%s[%s]: Calling getall() \n",
+      D_DEBUG, meth, con_h );
+
+  *cl_rc = citrusleaf_lset_scan(my_config->asc, ns, set, key, ldt, bins, n_bins,
+  timeout_ms, NULL);
+
+  if(TRA_DEBUG) fprintf(stderr,"<><><> g_nread before GETALL(%d)", g_nread );
+
+  if (start_time)
+    cf_histogram_insert_data_point(g_read_histogram, start_time);
+  if (g_want_stopwatch)
+    cf_atomic_int_incr(&g_nread);
+
+ if(TRA_DEBUG)
+   fprintf(stderr,":::  g_nread after GETALL(%d)<><><> \n", g_nread );
+
+  return GW_OK;
+} // end gw_getall()
+
+
+
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<< END OF FILE >>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
