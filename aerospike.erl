@@ -53,7 +53,7 @@
 %% to any caller who wants to import us.
 -export([connect/0, connect/2, addhost/4, shutdown/1, shutdownAll/0,
 	clinfo/1, clinfo/2, init/0, put/6, get/6, getAll/5, delete/5,
-	histogram/1, stopwatch/1, lsetAdd/7]).
+	histogram/1, stopwatch/1, lsetAdd/7, lsetGetAll/6]).
 
 %% Include our record definitions.
 -include("aerospike.hrl").
@@ -362,6 +362,31 @@ lsetAdd(_C, _NameSpace, _Set, _Key, _Ldt, _Values, _Clwp) ->
 % [_C, _NameSpace, _Set, _Key, _Value, _Clwp ]),
 % aerospike:put(_C, _NameSpace, _Set, _Key, _Value, _Clwp).
   'function_lset_add_not_loaded'. % This gets replaced by the NIF call on load
+
+%% -----------------------------------------------------------------------
+%% Name: lsetGetAll(Connection, Namespace, Set, Key, TimeoutMS )
+%% Description: Get All values from the database, for a given key
+%% Parameters:
+%%   Connection: the connection ID from the initial connect(Host, Port) call
+%%   Namespace: The Namespace into which this put value will be written
+%%       Note that Namespace is defined in the aerospike server config file
+%%       and that the Namespace "test" is a defined Namespace in the 
+%%       default /etc/citrusleaf.conf server config file.
+%%   Set: The Set name for this grouping of records
+%%   Key: The unique key (e.g. "abc") for this record
+%%   TimeoutMS: Timeout (in milliseconds) to wait (0 = forever)
+%% Usage:
+%%   [{BinName1, Value1}, {BinName2, Value2} ...] =
+%%     get(C, "testns", "myset", "mykey", TimeoutMS).
+%% Errors:
+%% Notes:
+%% -----------------------------------------------------------------------
+lsetGetAll(_C, _NameSpace, _Set, _Key, _Ldt, _Timeout_ms) ->
+% io:format(">> lsetGetAll( C(~w) NS(~s) Set(~s) Key(~s) Timeout(~w):: ~n",
+% [_C, _NameSpace, _Set, _Key, _Timeout_ms ]),
+% aerospike:getAll(_C, _NameSpace, _Set, _Key, _Ldt, _Timeout_ms ).
+  'function_lsetGetAll_not_loaded'.  % This gets replaced by the NIF call on load
+
 
 
 %%%

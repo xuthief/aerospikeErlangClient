@@ -750,8 +750,7 @@ cl_rv citrusleaf_lset_exists(cl_cluster *asc, const char *ns, const char *set, c
  *	@ingroup ldt_operations
  */
 
-cl_rv citrusleaf_lset_get(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, cl_bin *bins, int n_bins, int timeout_ms, uint32_t *cl_gen);
-
+cl_rv citrusleaf_lset_get(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, cl_bin **bins, int *n_bins, int timeout_ms, uint32_t *cl_gen);
 /**
  *	Given an lset bin, filter the set of objects using the given filter function.
  *	If no filter function is specified, all values in the set will be returned.
@@ -829,7 +828,8 @@ cl_rv citrusleaf_lset_get(cl_cluster *asc, const char *ns, const char *set, cons
  *
  *	@ingroup ldt_operations
  */
-cl_rv citrusleaf_lset_scan(cl_cluster *asc, char *ns, char *set, cl_bin *bins, int n_bins, bool get_key, citrusleaf_get_many_cb cb, void *udata, bool nobindata);
+
+cl_rv citrusleaf_lset_scan(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, cl_bin **bins, int *n_bins, int timeout_ms, uint32_t *cl_gen);
 
 /**
  *	Look up a lset and find how many elements it contains
