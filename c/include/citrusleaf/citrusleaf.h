@@ -889,8 +889,9 @@ cl_rv citrusleaf_lset_size(cl_cluster *asc, const char *ns, const char *set, con
  *
  *	@ingroup ldt_operations
  */
-cl_rv citrusleaf_lset_remove(
-        cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const                    cl_write_parameters *cl_w_p);
+
+cl_rv 
+citrusleaf_lset_remove(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, const cl_object *val, const cl_write_parameters *cl_w_p);
 
 /**
  *	Destroy the lset bin

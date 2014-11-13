@@ -2289,6 +2289,114 @@ lset_add7_nif(ErlNifEnv* envp, int argc, const ERL_NIF_TERM argv[])
 } // end put6_nif()
 
 /**
+ * Perform the lset_add function -- and return the add report
+ * in Erlang NIF Terms.
+ */
+static ERL_NIF_TERM
+lset_remove7_nif(ErlNifEnv* envp, int argc, const ERL_NIF_TERM argv[])
+{
+  int con_h;
+  char ns[NSNAME_MAX+1];
+  char set[SETNAME_MAX+1];
+  char ldt[LDT_MAX+1];
+  cl_object key_obj;
+  cl_object value_obj;
+
+  ns[NSNAME_MAX] = '\0';
+  set[SETNAME_MAX] = '\0';
+  ldt[LDT_MAX] = '\0';
+
+  static char * meth = "lset_remove7_nif()";
+  if(TRA_ENTER) fprintf(stderr,"%s[%s]: argc(%d)\n",D_ENTER,meth,argc);
+
+  if( TRA_DEBUG) {
+    fprintf(stderr, "%s[%s]: Argument Examination\n", D_DEBUG, meth );
+    util_show_all_args( meth, envp, argc, argv );
+  }
+
+  // this takes care of the first 4 parms
+  char* parm_error_msg =
+    util_extract_common_lead_parms(envp, argc, argv, &con_h, ns, set, &key_obj);
+  if (parm_error_msg) {
+    return util_make_error_tuple(envp, parm_error_msg);
+  }
+
+  if( TRA_DEBUG) {
+    fprintf(stderr, "%s[%s]: Have processed the first FOUR parms.\n",
+        D_DEBUG, meth );
+    fprintf(stderr, "%s[%s]: Now Processing the TUPLE for BINS/VALUES.\n",
+        D_DEBUG, meth );
+  }
+
+  // 5th parm is ldt 
+  // first try the search criteria as string, then try as an atom
+  // note: enif_get_string and enif_get_atom will return byte count read,
+  // including the null byte
+  int len;
+  len = enif_get_string(envp, argv[4], ldt, LDT_MAX, ERL_NIF_LATIN1);
+  if (!len) {
+    len = enif_get_atom(envp, argv[4], ldt, LDT_MAX, ERL_NIF_LATIN1);
+    if (!len) {
+      return "LDT must be a string or an atom";
+    }
+  }
+  if( TRA_DEBUG ) {
+    fprintf(stderr, "%s[%s]:LDT(%s) OK: Next check Add Value\n",
+    D_DEBUG, meth, ldt);
+  }
+
+  // 6th parm is a atom or string
+  // first try the search criteria as string, then try as an atom
+  // note: enif_get_string and enif_get_atom will return byte count read,
+  // including the null byte
+  len = util_convert_term_to_cl_obj(envp, argv[5], &value_obj);
+  if (len == 0) {
+    if(TRA_ERROR)
+      fprintf(stderr, "%s[%s] Couldn't figure out how to convert value object\n"
+        D_ERROR, meth );
+    return "Key is bad: Not of type atom, String or List";
+  }
+  if( TRA_DEBUG ) {
+    fprintf(stderr, "%s[%s] value_obj OK: Next check clwp\n",
+    D_DEBUG, meth);
+  }
+  // the 7th parm is clwopts. It's record, so here appears as a tuple,
+  // if present
+  cl_write_parameters clwp;
+  cl_write_parameters *clwp_ptr;
+
+  if (enif_is_tuple(envp, argv[6])) {
+    if( TRA_DEBUG ) fprintf(stderr, "PUT: Converting CLWOPTS Tuple\n");
+    cl_write_parameters_set_default(&clwp);
+    int nChange = util_convert_term_to_clwp_record(envp, argv[5], &clwp);
+    // printf("nChange2 = %d\n", nChange);
+    if (nChange) {
+      // found at least one set value
+      if( TRA_DEBUG ) fprintf(stderr, "PUT: Found a CLWOPTS Option\n");
+      clwp_ptr = &clwp;
+    } else {
+      // use default if not set values found
+      clwp_ptr = NULL;
+      if( TRA_DEBUG ) fprintf(stderr, "PUT: NULL CLWOPTS \n");
+    }
+  } else {
+    // not set, use default
+    clwp_ptr = NULL;
+    if( TRA_DEBUG ) fprintf(stderr, "PUT: NULL CLWOPTS \n");
+  }
+
+  int cl_rc;
+  GW_RC gw_rc =
+    gw_lset_remove(con_h, ns, set, &key_obj, ldt, &value_obj, clwp_ptr, &cl_rc);
+
+  if( TRA_EXIT ) fprintf(stderr, "%s[%s]: Exit Put Results:GWRC(%d) CLRC(%d)\n",
+      D_EXIT, meth, gw_rc, cl_rc );
+
+  return util_make_return_term_by_rc(envp, gw_rc, cl_rc);
+} // end lset_remove7_nif()
+
+
+/**
  * Do the Erlang NIF to Citrusleaf Parameter translation and then call
  * the actual Citrusleaf_getall() function.  Perform the reverse translation
  * of the answers (CL to NIF).
@@ -2401,6 +2509,7 @@ static ErlNifFunc nif_funcs[] = {
         {"stopwatch",   1, stopwatch1_nif},
         {"shutdownAll", 0, shutdownAll0_nif}
         ,{"lsetAdd",    7, lset_add7_nif}
+        ,{"lsetDelete", 7, lset_remove7_nif}
         ,{"lsetGetAll", 6, lset_scan6_nif}
 };
 

@@ -2041,7 +2041,7 @@ void citrusleaf_print_stats(void)
 static
 size_t pack_args(unsigned char* buf, size_t cnt, ...);
 
-    extern cl_rv
+extern cl_rv
 citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, const cl_object *pval, const cl_write_parameters *cl_w_p)
 {
     if (!g_initialized) return(-1);
@@ -2058,6 +2058,58 @@ citrusleaf_lset_add(cl_cluster *asc, const char *ns, const char *set, const cl_o
     func.free = false;
     func.value = LDT_SET_OP_ADD;
     func.len = strlen(LDT_SET_OP_ADD);
+
+    cl_object oldt;
+    citrusleaf_object_init_str(&oldt, ldt); 
+
+    size_t cap = 8 + (oldt.sz+8) + (pval->sz+8);
+    size_t size = 0;
+    char *buf = malloc(cap);
+    size = pack_args(buf, 2, &oldt, pval);
+
+    as_buffer args;
+    args.capacity = cap; 
+    args.size = size;
+    args.data = buf;
+
+    as_call call = {
+        .file = &file,
+        .func = &func,
+        .args = &args
+    }; 
+
+    cf_digest digest;
+    citrusleaf_calculate_digest(set, key, &digest);
+
+    int rc = do_the_full_monte_a( asc, 0, CL_MSG_INFO2_WRITE, 0, ns, set, NULL, &digest, 
+            NULL, CL_OP_WRITE, 0, n_bins, NULL, cl_w_p, 
+            &trid, NULL, &call, NULL);
+
+    free(buf);
+    return rc;
+}
+
+extern cl_rv
+citrusleaf_lset_remove(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, const cl_object *pval, const cl_write_parameters *cl_w_p)
+{
+    if (!g_initialized) return(-1);
+
+    uint64_t trid=0;
+    int n_bins = 0;
+
+    as_string file = 
+    {
+        .free = false,
+        .value = DEFAULT_LSET_PACKAGE,
+        .len = strlen(DEFAULT_LSET_PACKAGE)
+    };
+
+    as_string func =
+    {
+        .free = false,
+        .value = LDT_SET_OP_REMOVE,
+        .len = strlen(LDT_SET_OP_REMOVE)
+    };
 
     cl_object oldt;
     citrusleaf_object_init_str(&oldt, ldt); 
