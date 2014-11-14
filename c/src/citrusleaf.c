@@ -2197,6 +2197,7 @@ citrusleaf_lset_scan(cl_cluster *asc, const char *ns, const char *set, const cl_
     if (rc == CITRUSLEAF_OK) {
         parse_result(bins_a, n_bins_a, bins, n_bins);
         citrusleaf_bins_free(bins_a, n_bins_a);
+        free(bins_a);
     } else {
         *n_bins = n_bins_a;
         *bins = bins_a;
@@ -2454,7 +2455,13 @@ size_t unpack_arg(cl_object * const arg, unsigned char* buf)
                 offset ++;
                 uint16_t size = cf_swap_from_be16(v);
                 size --;
-                unsigned char* blob = malloc(size);
+                char* blob;
+                if (blob_type == CL_STR) {
+                    blob = (char *)malloc(size+1);
+                    blob[size] = 0;
+                } else {
+                    blob = (char *)malloc(size);
+                }
                 memcpy(blob, buf + offset, size);
                 offset += size;
                 citrusleaf_object_init_blob_type(arg, blob_type, blob, size);
@@ -2469,7 +2476,13 @@ size_t unpack_arg(cl_object * const arg, unsigned char* buf)
                 offset ++;
                 uint32_t size = cf_swap_from_be32(v);
                 size --;
-                unsigned char* blob = malloc(size);
+                char* blob;
+                if (blob_type == CL_STR) {
+                    blob = (char *)malloc(size+1);
+                    blob[size] = 0;
+                } else {
+                    blob = (char *)malloc(size);
+                }
                 memcpy(blob, buf + offset, size);
                 offset += size;
                 citrusleaf_object_init_blob_type(arg, blob_type, blob, size);
@@ -2483,7 +2496,13 @@ size_t unpack_arg(cl_object * const arg, unsigned char* buf)
                 uint8_t blob_type = *(uint8_t*)(buf + offset);
                 offset ++;
                 size --;
-                unsigned char* blob = malloc(size);
+                char* blob;
+                if (blob_type == CL_STR) {
+                    blob = (char *)malloc(size+1);
+                    blob[size] = 0;
+                } else {
+                    blob = (char *)malloc(size);
+                }
                 memcpy(blob, buf + offset, size);
                 offset += size;
                 citrusleaf_object_init_blob_type(arg, blob_type, blob, size);
@@ -2519,12 +2538,14 @@ size_t unpack_args(char* buf, cl_bin **bins, int *n_bins)
                 uint16_t v = *(uint16_t*)(buf + offset);
                 offset += 2;
                 *n_bins = cf_swap_from_be16(v);
+                break;
             }
         case 0xdd: 
             { // list with 32 bit header
                 uint32_t v = *(uint32_t*)(buf + offset);
                 offset += 4;
                 *n_bins = cf_swap_from_be32(v);
+                break;
             }
         default:
             if ((type & 0xf0) == 0x90) { // list with 8 bit combined header
@@ -2540,6 +2561,7 @@ size_t unpack_args(char* buf, cl_bin **bins, int *n_bins)
     cl_bin* bins_p = (cl_bin *)malloc(sizeof(cl_bin) * (*n_bins)); 
     for (int i=0; i<*n_bins; i++) {
         // malloc bin members
+        bins_p[i].bin_name[0] = 0;
         offset += unpack_arg(&(bins_p[i].object), buf+offset);
     }
     *bins = bins_p;

@@ -119,7 +119,12 @@ do_lset_example(config *c)
     cl_object o_key;
     citrusleaf_object_init_str(&o_key, "test-key");
     cl_object o_val;
-    citrusleaf_object_init_str(&o_val, "lset value3");
+    citrusleaf_object_init_str(&o_val, "lset value");
+    cl_object o_val2;
+    citrusleaf_object_init_str(&o_val2, "Hello World122222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222");
+    // citrusleaf_object_init_str(&o_val2, "lset value2");
+    cl_object o_val3;
+    citrusleaf_object_init_str(&o_val3, "lset value3");
     char ldt_name[] = "mylset";
 
     // set a non-default write parameter
@@ -131,6 +136,37 @@ do_lset_example(config *c)
         fprintf(stderr, "citrusleaf lset add failed: error %d\n",rv);
     } else {
         fprintf(stderr, "citrusleaf lset add succeeded\n");
+    }
+
+    if (0 != (rv = citrusleaf_lset_add(c->asc, c->ns, c->set, &o_key, ldt_name, &o_val2, &cl_wp))) {
+        fprintf(stderr, "citrusleaf lset add failed: error %d\n",rv);
+    } else {
+        fprintf(stderr, "citrusleaf lset add succeeded\n");
+    }
+
+    // Delete the key you just set
+    if (0 != (rv = citrusleaf_delete(c->asc, c->ns, c->set, &o_key, 0/*default write params*/))) {
+        fprintf(stderr, "citrusleaf delete failed: error %d\n",rv);
+    }
+    fprintf(stderr, "citrusleaf delete succeeded\n");
+
+#define COUNT (600)
+    char val_buf[COUNT + 1];
+    for (int i=390; i<COUNT; i++) 
+    {
+        int j = 0;
+        for (; j<i; j++)
+        {
+            val_buf[j] = '1';
+        }
+        val_buf[j] = 0;
+
+        citrusleaf_object_init_str(&o_val3, val_buf);
+        if (0 != (rv = citrusleaf_lset_add(c->asc, c->ns, c->set, &o_key, ldt_name, &o_val3, &cl_wp))) {
+            fprintf(stderr, "citrusleaf lset add failed for %d: error %d\n",i, rv);
+        } else {
+            fprintf(stderr, "citrusleaf lset add succeeded\n");
+        }
     }
 
     // Get all the values in this key (enjoy the fine c99 standard)
@@ -164,11 +200,57 @@ do_lset_example(config *c)
     }
     fprintf(stderr,"citrusleaf getall succeeded\n");
 
-//  // Delete the key you just set
-//  if (0 != (rv = citrusleaf_delete(c->asc, c->ns, c->set, &o_key, 0/*default write params*/))) {
-//      fprintf(stderr, "citrusleaf delete failed: error %d\n",rv);
-//  }
-//  fprintf(stderr, "citrusleaf delete succeeded\n");
+    if (0 != (rv = citrusleaf_lset_add(c->asc, c->ns, c->set, &o_key, ldt_name, &o_val3, &cl_wp))) {
+        fprintf(stderr, "citrusleaf lset add failed: error %d\n",rv);
+    } else {
+        fprintf(stderr, "citrusleaf lset add succeeded\n");
+    }
+
+    if (0 != (rv = citrusleaf_lset_remove(c->asc, c->ns, c->set, &o_key, ldt_name, &o_val, &cl_wp))) {
+        fprintf(stderr, "citrusleaf lset delete failed: error %d\n",rv);
+    } else {
+        fprintf(stderr, "citrusleaf lset delete succeeded\n");
+    }
+
+    if (0 != (rv = citrusleaf_lset_scan(c->asc, c->ns, c->set, &o_key, ldt_name, &cl_v, &cl_v_len, c->timeout_ms, &generation))) {
+        fprintf(stderr, "get after put failed, but there should be a key here - %d\n",rv);
+        if (cl_v)	free(cl_v);
+    }
+    fprintf(stderr, "get all returned %d bins\n",cl_v_len);
+    for (int i=0;i<cl_v_len;i++) {
+        fprintf(stderr, "%d:  bin %s ",i,cl_v[i].bin_name);
+        switch (cl_v[i].object.type) {
+            case CL_STR:
+                fprintf(stderr, "type string: value %s\n", cl_v[i].object.u.str);
+                break;
+            case CL_INT:
+                fprintf(stderr, "type int: value %"PRId64"\n",cl_v[i].object.u.i64);
+                break;
+            default:
+                fprintf(stderr, "type unknown! (%d)\n",(int)cl_v[i].object.type);
+                break;
+        }
+        // could have done this -- but let's free the objects in the bins later
+        // citrusleaf_object_free(&cl_v[i].object);
+    }
+    if (cl_v)	{
+        citrusleaf_bins_free(cl_v, cl_v_len);
+        free(cl_v); // only one free for all bins
+    }
+    fprintf(stderr,"citrusleaf getall succeeded\n");
+
+    if (0 != (rv = citrusleaf_lset_remove(c->asc, c->ns, c->set, &o_key, ldt_name, &o_val2, &cl_wp))) {
+        fprintf(stderr, "citrusleaf lset delete failed: error %d\n",rv);
+    } else {
+        fprintf(stderr, "citrusleaf lset delete succeeded\n");
+    }
+
+    // Delete the key you just set
+    if (0 != (rv = citrusleaf_delete(c->asc, c->ns, c->set, &o_key, 0/*default write params*/))) {
+        fprintf(stderr, "citrusleaf delete failed: error %d\n",rv);
+    }
+    fprintf(stderr, "citrusleaf delete succeeded\n");
+
 
     return(0);
 }

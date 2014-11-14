@@ -667,6 +667,18 @@ util_lookup_cl_errmsg(int n)
         return "CITRUSLEAF_FAIL_KEY_BUSY";
         break;
     }
+    case CITRUSLEAF_FAIL_UDF_BAD_RESPONSE: {
+        return "CITRUSLEAF_FAIL_UDF_BAD_RESPONSE";
+        break;
+    }
+    case CITRUSLEAF_FAIL_UDF_LUA_EXECUTION: {
+        return "CITRUSLEAF_FAIL_UDF_LUA_EXECUTION";
+        break;
+    }
+    case CITRUSLEAF_FAIL_LUA_FILE_NOTFOUND: {
+        return "CITRUSLEAF_FAIL_LUA_FILE_NOTFOUND";
+        break;
+    }
     default:
           return "UNKNOWN ERROR";
     }
