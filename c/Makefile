@@ -3,8 +3,8 @@
 
 all: libcitrusleaf
 	$(MAKE) -C example
-	$(MAKE) -C tests/key_c 
-	$(MAKE) -C tests/loop_c
+	#$(MAKE) -C tests/key_c 
+	#$(MAKE) -C tests/loop_c
 
 	@echo "done."
 
