@@ -5,6 +5,6 @@
   {registered, []},
   {applications, [
                  ]},
-  {mod, { aerospike, []}},
+  % {mod, { aerospike, []}},
   {env, []}
  ]}.
