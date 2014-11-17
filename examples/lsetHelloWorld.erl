@@ -45,8 +45,8 @@ hello() ->
 % AddResults1 = aerospike:lsetAdd( C, NS, Set, Key, Ldt, MyRecord1, WriteOps),
 % io:format("Add Results(~p) ~n", [AddResults1]),
 
-% AddResults0 = aerospike:lsetAdd( C, NS, Set, Key, Ldt, MyRecord1, WriteOps),
-% io:format("Add Results(~p) ~n", [AddResults0]),
+    AddResults0 = aerospike:lsetAdd( C, NS, Set, Key, Ldt, <<"aaaaa">>, WriteOps),
+  io:format("Add Results(~p) ~n", [AddResults0]),
 
 % % Write to the Aerospike Server
 % AddResults2 = aerospike:lsetAdd( C, NS, Set, Key, Ldt, MyRecord2, WriteOps),
