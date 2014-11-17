@@ -46,8 +46,9 @@
 %% -----------------------------------------------------------------------
 init() ->
   io:format(">> init() with citrusleaf.erl ~n" ),
+    ok.
   %% load the nif file, then if ok, init the system
-	ok = erlang:load_nif("./citrusleaf_nif", 0).
+  %% ok = erlang:load_nif("./citrusleaf_nif", 0).
   % Something strange here -- system won't recognize clgwinit
   %% citrusleaf:clgwinit().
 
