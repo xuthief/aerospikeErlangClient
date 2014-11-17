@@ -22,10 +22,6 @@ EIVER = 3.7.17
 DIR_ERL = /usr/lib/erlang
 ERL_INCL = $(DIR_ERL)/usr/include
 
-# These directories are all local from this Makefile's position
-# The Local Code (Erlang Client) Include
-CLIENT_INCL = ./include
-
 # Aerospike Citrusleaf Include
 # The source files already expect to use "citrusleaf/citrusleaf.h", so do NOT
 # add the extra directory here.
@@ -39,6 +35,10 @@ C_DIR = ./c
 ER_DIR_OBJ = ./obj
 ER_DIR_SRC = ./c_src
 ER_ERL_DIR = .
+
+# These directories are all local from this Makefile's position
+# The Local Code (Erlang Client) Include
+CLIENT_INCL = $(ER_DIR_SRC)/include
 
 # Set the VPATH to look in all these places for things
 VPATH = $(C_DIR_OJB) $(ER_DIR_OJB) 
