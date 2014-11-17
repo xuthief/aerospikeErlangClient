@@ -161,7 +161,7 @@ do_lset_example(config *c)
         }
         val_buf[j] = 0;
 
-        citrusleaf_object_init_str(&o_val3, val_buf);
+        citrusleaf_object_init_int(&o_val3, i);
         if (0 != (rv = citrusleaf_lset_add(c->asc, c->ns, c->set, &o_key, ldt_name, &o_val3, &cl_wp))) {
             fprintf(stderr, "citrusleaf lset add failed for %d: error %d\n",i, rv);
         } else {

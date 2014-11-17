@@ -36,7 +36,7 @@ hello() ->
   Set = "test_set",
   {ok, C } = aerospike:connect( Host, Port ),
   Key = "lsetHello4",
-    Ldt = "test_lset",
+    Ldt = "lset",
   MyRecord1 = "Hello World1",
   MyRecord2 = "",
   WriteOps = 0,
@@ -92,7 +92,8 @@ hello() ->
 -define (PrintTimes, 5).
 
 addList( C, NS, Set, Key, Ldt, MyRecord2, WriteOps, Index) ->
-    MyRecord = MyRecord2 ++ "2",
+     MyRecord = Index,
+    % MyRecord = MyRecord2 ++ "2",
     %% MyRecord = "HelloWorld" ++ erlang:integer_to_list(Index),
     if 
         Index < ?Count ->
@@ -113,7 +114,8 @@ addList( C, NS, Set, Key, Ldt, MyRecord2, WriteOps, Index) ->
 
 
 delList( C, NS, Set, Key, Ldt, MyRecord2, WriteOps, Index) ->
-    MyRecord = MyRecord2 ++ "2",
+     MyRecord = Index,
+    % MyRecord = MyRecord2 ++ "2",
     % MyRecord = "HelloWorld" ++ erlang:integer_to_list(Index),
     if 
         Index < ?Count ->

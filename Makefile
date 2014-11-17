@@ -37,13 +37,16 @@ C_DIR_OBJ = ./c/obj/native
 C_DIR_SRC = ./c/src
 C_DIR = ./c
 ER_DIR_OBJ = ./obj
-ER_DIR_SRC = ./src
+ER_DIR_SRC = ./c_src
 ER_ERL_DIR = .
 
 # Set the VPATH to look in all these places for things
 VPATH = $(C_DIR_OJB) $(ER_DIR_OJB) 
 VPATH += $(C_DIR_SRC) $(ER_DIR_SRC) 
 VPATH += .
+
+# REBAR
+REBAR = ./rebar
 
 DIR_TARGET = .
 
@@ -82,7 +85,7 @@ TARGET_D = ./priv/$(SONAME)
 #-shared 
 LDFLAGS = -shared -Wl,-soname=$(SONAME) 
 LDFLAGS += -L$(DIR_ERL)/lib/erl_interface-$(EIVER)/lib -L. -L/usr/lib/
-LDLIBS =  -lerl_interface -pthread -lssl -pthread -lrt -lcitrusleaf -lcrypto
+LDLIBS =  -lerl_interface -pthread -lssl -pthread -lrt -lcrypto
 
 AS_CFLAGS = -D_FILE_OFFSET_BITS=64 -std=gnu99 -D_REENTRANT
 MARCH_NATIVE = $(shell uname -m)
@@ -96,9 +99,8 @@ CFLAGS_NATIVE = -g -fno-common -fno-strict-aliasing -rdynamic  -Wextra $(AS_CFLA
 
 all: compile
        
-compile: makec $(TARGET_D) $(ERL_BEAM_OBJECTS) $(ERL_BEAM_EXAMPLE_OBJECTS)
-	cp ./*.erl ./ebin
-	cp ./*.beam ./ebin
+compile: makec $(TARGET_D) rebar_compile
+
 examples: $(ERL_BEAM_EXAMPLE_OBJECTS) $(ERL_BEAM_OBJECTS)
 
 ER_OBJECTS : $(HEADERS) $(SOURCES)
@@ -121,6 +123,9 @@ asbench.beam: asbench.erl aerospike.beam aerospike.hrl
 
 stats_record.beam: stats_record.erl aerospike.beam aerospike.hrl
 	/usr/bin/erlc stats_record.erl
+
+rebar_compile:
+	$(REBAR) compile
 
 clean: 
 	/bin/rm -rf $(ER_DIR_OBJ)/*

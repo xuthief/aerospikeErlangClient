@@ -1,0 +1,10 @@
+{application, aerospike,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                 ]},
+  {mod, { cberl_app, []}},
+  {env, []}
+ ]}.
