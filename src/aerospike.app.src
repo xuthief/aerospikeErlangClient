@@ -5,6 +5,6 @@
   {registered, []},
   {applications, [
                  ]},
-  {mod, { cberl_app, []}},
+  %{mod, { aerospike, []}},
   {env, []}
  ]}.

@@ -132,6 +132,7 @@ clean:
 	/bin/rm -rf $(SONAME)
 	/bin/rm -rf $(ERL_BEAM_OBJECTS)
 	/bin/rm -rf $(ERL_BEAM_EXAMPLE_OBJECTS)
+	$(REBAR) clean
 	make clean -C $(C_DIR)
 
 makec:

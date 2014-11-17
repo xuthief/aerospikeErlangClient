@@ -76,8 +76,12 @@ init() ->
         {error, _} ->
             EbinDir = filename:dirname(code:which(?MODULE)),
             AppPath = filename:dirname(EbinDir),
-            filename:join(AppPath, "priv");
+            io:format("aaadirs ~p ~p ~n", [AppPath, AppPath ++ "/../priv"]),
+            %filename:join(AppPath, "priv");
+            AppPath ++ "/../priv";
+            %filename:join(filename:join(AppPath, "../") , "/priv");
         Path ->
+            io:format("bbbdirs ~p ~n", [Path]),
             Path
     end,
 	ok = erlang:load_nif(filename:join(PrivDir, "aerospike_nif"), 0).
