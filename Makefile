@@ -99,7 +99,7 @@ CFLAGS_NATIVE = -g -fno-common -fno-strict-aliasing -rdynamic  -Wextra $(AS_CFLA
 
 all: compile
        
-compile: makec $(TARGET_D) rebar_compile
+compile: makec rebar_compile
 
 examples: $(ERL_BEAM_EXAMPLE_OBJECTS) $(ERL_BEAM_OBJECTS)
 
