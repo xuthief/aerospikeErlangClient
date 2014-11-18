@@ -2194,14 +2194,88 @@ citrusleaf_lset_scan(cl_cluster *asc, const char *ns, const char *set, const cl_
             &bins_a, CL_OP_WRITE, 0, &n_bins_a, NULL, &wp, 
             &trid, NULL, &call, NULL);
 
-    if (rc == CITRUSLEAF_OK) {
-        parse_result(bins_a, n_bins_a, bins, n_bins);
+    if (rc==CITRUSLEAF_OK && (parse_result(bins_a, n_bins_a, bins, n_bins) >= 0)) {
         citrusleaf_bins_free(bins_a, n_bins_a);
         free(bins_a);
-    } else {
+    } else if (rc == CITRUSLEAF_OK) {     // treat parse result error as unkown error from server
+        rc = CITRUSLEAF_FAIL_UNKNOWN;
+        *n_bins = n_bins_a;
+        *bins = bins_a;
+    } else {  
         *n_bins = n_bins_a;
         *bins = bins_a;
     }
+
+    free(buf);
+    return rc;
+}
+
+    extern cl_rv
+citrusleaf_lset_size(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, int *n_bins, int timeout_ms, uint32_t *cl_gen)
+{
+    if (!g_initialized) return(-1);
+
+    cl_write_parameters wp;
+    cl_write_parameters_set_default(&wp);
+    wp.timeout_ms = timeout_ms == UINT32_MAX ? 0 : timeout_ms;
+
+    uint64_t trid=0;
+
+    as_string file = 
+    {
+        .free = false,
+        .value = DEFAULT_LSET_PACKAGE,
+        .len = strlen(DEFAULT_LSET_PACKAGE)
+    };
+
+    as_string func = 
+    {
+        .free = false,
+        .value = LDT_SET_OP_SIZE,
+        .len = strlen(LDT_SET_OP_SIZE)
+    };
+
+    cl_object oldt;
+    citrusleaf_object_init_str(&oldt, ldt); 
+
+    size_t cap = 8 + (oldt.sz+8);
+    size_t size = 0;
+    char *buf = malloc(cap);
+    size = pack_args(buf, 1, &oldt);
+
+    as_buffer args;
+    args.capacity = cap; 
+    args.size = size;
+    args.data = buf;
+
+    as_call call = {
+        .file = &file,
+        .func = &func,
+        .args = &args
+    }; 
+
+    cf_digest digest;
+    citrusleaf_calculate_digest(set, key, &digest);
+
+    int n_bins_a = 0;
+    cl_bin *bins_a = NULL;
+    int rc = do_the_full_monte_a( asc, 0, CL_MSG_INFO2_WRITE, 0, ns, set, NULL, &digest, 
+            &bins_a, CL_OP_WRITE, 0, &n_bins_a, NULL, &wp, 
+            &trid, NULL, &call, NULL);
+
+    if (rc==CITRUSLEAF_OK && (n_bins_a == 1 && bins_a[0].object.type == CL_INT)) {
+        *n_bins = bins_a[0].object.u.i64;
+    } else if (rc == CITRUSLEAF_OK) {
+        // treat parse result error as unkown error from server
+        rc = CITRUSLEAF_FAIL_UNKNOWN;
+        *n_bins = 0;
+    } else {
+        *n_bins = 0;
+    }
+
+    citrusleaf_bins_free(bins_a, n_bins_a);
+    free(bins_a);
+
     free(buf);
     return rc;
 }
@@ -2569,7 +2643,8 @@ size_t unpack_args(char* buf, cl_bin **bins, int *n_bins)
     return offset;
 }
 
-void parse_result(cl_bin *bins_a, int n_bins_a, cl_bin *bins[], int *n_bins) {
+// >=0 bins allocated, <0 bins not allocated
+int parse_result(cl_bin *bins_a, int n_bins_a, cl_bin *bins[], int *n_bins) {
 
     // Begin processing the data returned from the server,
     // IFF `result` argument is not NULL.
@@ -2581,10 +2656,13 @@ void parse_result(cl_bin *bins_a, int n_bins_a, cl_bin *bins[], int *n_bins) {
 
         if ( strcmp(bin->bin_name,"SUCCESS") == 0 ) {
             unpack_args(bin->object.u.blob, bins, n_bins);
+            return 0;
         }
         else if ( strcmp(bin->bin_name,"FAILURE") == 0 ) {
             unpack_args(bin->object.u.blob, bins, n_bins);
+            return 1;
         }
     }
+    return -1;
 }
 

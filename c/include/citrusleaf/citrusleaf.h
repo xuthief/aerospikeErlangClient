@@ -68,10 +68,66 @@ typedef enum cl_rv {
 	CITRUSLEAF_FAIL_RECORD_TOO_BIG = 13,
 	CITRUSLEAF_FAIL_KEY_BUSY = 14,
 
+    // scan was aborted ... but why?
+    CITRUSLEAF_FAIL_SCAN_ABORT              = 15,
+
+    // Server does not (yet) support this function
+    CITRUSLEAF_FAIL_UNSUPPORTED_FEATURE     = 16,
+
+    // Bin-level replace-only supported on server but not on client.
+    CITRUSLEAF_FAIL_BIN_NOT_FOUND           = 17,
+
+    // Storage device(s) can't keep up with the current write load.
+    CITRUSLEAF_FAIL_DEVICE_OVERLOAD         = 18,
+
+    // Record key sent with transaction did not match key stored on server.
+    CITRUSLEAF_FAIL_KEY_MISMATCH            = 19,
+
+    // Request made with no namespace or unrecognized namespace.
+    CITRUSLEAF_FAIL_NAMESPACE               = 20,
+
+    // Write operation made with too-long bin name, or bin name quota exceeded.
+    CITRUSLEAF_FAIL_BIN_NAME                = 21,
+
+    CITRUSLEAF_QUERY_END                    = 50,
+    CITRUSLEAF_SECURITY_NOT_SUPPORTED       = 51,
+    CITRUSLEAF_SECURITY_NOT_ENABLED         = 52,
+    CITRUSLEAF_SECURITY_SCHEME_NOT_SUPPORTED = 53,
+    CITRUSLEAF_INVALID_COMMAND              = 54,
+    CITRUSLEAF_INVALID_FIELD                = 55,
+    CITRUSLEAF_ILLEGAL_STATE                = 56,
+    CITRUSLEAF_INVALID_USER                 = 60,
+    CITRUSLEAF_USER_ALREADY_EXISTS          = 61,
+    CITRUSLEAF_INVALID_PASSWORD             = 62,
+    CITRUSLEAF_EXPIRED_PASSWORD             = 63,
+    CITRUSLEAF_FORBIDDEN_PASSWORD           = 64,
+    CITRUSLEAF_INVALID_CREDENTIAL           = 65,
+    CITRUSLEAF_INVALID_ROLE                 = 70,
+    CITRUSLEAF_INVALID_PRIVILEGE            = 71,
+    CITRUSLEAF_NOT_AUTHENTICATED            = 80,
+    CITRUSLEAF_ROLE_VIOLATION               = 81,
+
+    // ???
+    CITRUSLEAF_FAIL_INVALID_DATA              = 99,
+
     // UDF RANGE 100-110
     CITRUSLEAF_FAIL_UDF_BAD_RESPONSE    = 100,
     CITRUSLEAF_FAIL_UDF_LUA_EXECUTION   = 101,
     CITRUSLEAF_FAIL_LUA_FILE_NOTFOUND   = 102,
+
+    // Secondary Index Query Codes 200 - 230
+    CITRUSLEAF_FAIL_INDEX_FOUND             = 200,
+    CITRUSLEAF_FAIL_INDEX_NOTFOUND          = 201,
+    CITRUSLEAF_FAIL_INDEX_OOM               = 202,
+    CITRUSLEAF_FAIL_INDEX_NOTREADABLE       = 203,
+    CITRUSLEAF_FAIL_INDEX_GENERIC           = 204,
+    CITRUSLEAF_FAIL_INDEX_NAME_MAXLEN       = 205,
+    CITRUSLEAF_FAIL_INDEX_MAXCOUNT          = 206,
+
+    CITRUSLEAF_FAIL_QUERY_ABORTED           = 210,
+    CITRUSLEAF_FAIL_QUERY_QUEUEFULL         = 211,
+    CITRUSLEAF_FAIL_QUERY_TIMEOUT           = 212,
+    CITRUSLEAF_FAIL_QUERY_GENERIC           = 213
 } cl_rv;
 
 typedef enum cl_rvclient {
@@ -863,7 +919,7 @@ cl_rv citrusleaf_lset_scan(cl_cluster *asc, const char *ns, const char *set, con
  *
  *	@ingroup ldt_operations
  */
-cl_rv citrusleaf_lset_size(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, cl_bin *bins, int n_bins, int timeout_ms, uint32_t *cl_gen);
+cl_rv citrusleaf_lset_size(cl_cluster *asc, const char *ns, const char *set, const cl_object *key, const char *ldt, int *n_bins, int timeout_ms, uint32_t *cl_gen);
 
 /**
  *	Delete the given value from the lset

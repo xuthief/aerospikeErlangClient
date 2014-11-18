@@ -24,9 +24,10 @@
 %% (*) histogram/1:   Start Histogram, or get HS Report
 %% (*) stopwatch/1:   Start, Stop the stopwatch, or get the SW Report
 %%
-%% (*) lsetAdd/7:    Write a Record to the Aerospike LDT set
-%% (*) lsetDelete/7: Remove a Record to the Aerospike LDT set
-%% (*) lsetGetAll/6: Get a Record to the Aerospike LDT set
+%% (*) lsetAdd/7:       Write a Record to the Aerospike LDT set
+%% (*) lsetDelete/7:    Remove a Record to the Aerospike LDT set
+%% (*) lsetGetAll/6:    Get Records in the Aerospike LDT set
+%% (*) lsetSize/6:      Get Number of Records int the Aerospike LDT set
 %%
 %% ===================================================================
 %% NOTES:
@@ -55,7 +56,7 @@
 %% to any caller who wants to import us.
 -export([connect/0, connect/2, addhost/4, shutdown/1, shutdownAll/0,
 	clinfo/1, clinfo/2, init/0, put/6, get/6, getAll/5, delete/5,
-	histogram/1, stopwatch/1, lsetAdd/7, lsetDelete/7, lsetGetAll/6]).
+	histogram/1, stopwatch/1, lsetAdd/7, lsetDelete/7, lsetGetAll/6, lsetSize/6]).
 
 %% Include our record definitions.
 -include("aerospike.hrl").
@@ -418,6 +419,30 @@ lsetGetAll(_C, _NameSpace, _Set, _Key, _Ldt, _Timeout_ms) ->
 % [_C, _NameSpace, _Set, _Key, _Timeout_ms ]),
 % aerospike:getAll(_C, _NameSpace, _Set, _Key, _Ldt, _Timeout_ms ).
   'function_lsetGetAll_not_loaded'.  % This gets replaced by the NIF call on load
+
+%% -----------------------------------------------------------------------
+%% Name: lsetSize(Connection, Namespace, Set, Key, TimeoutMS )
+%% Description: Get All values from the database, for a given key
+%% Parameters:
+%%   Connection: the connection ID from the initial connect(Host, Port) call
+%%   Namespace: The Namespace into which this put value will be written
+%%       Note that Namespace is defined in the aerospike server config file
+%%       and that the Namespace "test" is a defined Namespace in the 
+%%       default /etc/citrusleaf.conf server config file.
+%%   Set: The Set name for this grouping of records
+%%   Key: The unique key (e.g. "abc") for this record
+%%   TimeoutMS: Timeout (in milliseconds) to wait (0 = forever)
+%% Usage:
+%%   [{BinName1, Value1}, {BinName2, Value2} ...] =
+%%     get(C, "testns", "myset", "mykey", TimeoutMS).
+%% Errors:
+%% Notes:
+%% -----------------------------------------------------------------------
+lsetSize(_C, _NameSpace, _Set, _Key, _Ldt, _Timeout_ms) ->
+% io:format(">> lsetSize( C(~w) NS(~s) Set(~s) Key(~s) Timeout(~w):: ~n",
+% [_C, _NameSpace, _Set, _Key, _Timeout_ms ]),
+% aerospike:getAll(_C, _NameSpace, _Set, _Key, _Ldt, _Timeout_ms ).
+  'function_lsetSize_not_loaded'.  % This gets replaced by the NIF call on load
 
 
 

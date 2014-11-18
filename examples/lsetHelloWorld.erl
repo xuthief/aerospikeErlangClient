@@ -35,17 +35,21 @@ hello() ->
   NS = "test",
   Set = "test_set",
   {ok, C } = aerospike:connect( Host, Port ),
-  Key = "lsetHello4",
+  io:format("connected Client C ~p~n", [C]),
+  Key = "etf:FS:/5316bd7179b6570f2ca6e20b/t5thi/1:1",
     Ldt = "lset",
   MyRecord1 = "Hello World1",
-  MyRecord2 = "",
+    MyRecord2 = <<"2173921422170132224">>,
   WriteOps = 0,
 
 % % Write to the Aerospike Server
 % AddResults1 = aerospike:lsetAdd( C, NS, Set, Key, Ldt, MyRecord1, WriteOps),
 % io:format("Add Results(~p) ~n", [AddResults1]),
 
-    AddResults0 = aerospike:lsetAdd( C, NS, Set, Key, Ldt, <<"aaaaa">>, WriteOps),
+    GetSize0 = aerospike:lsetSize( C, NS, Set, Key, Ldt, 0),
+    io:format("Size Results(~p) ~n", [GetSize0]),
+
+    AddResults0 = aerospike:lsetAdd( C, NS, Set, Key, Ldt, MyRecord2, WriteOps),
   io:format("Add Results(~p) ~n", [AddResults0]),
 
 % % Write to the Aerospike Server
@@ -53,8 +57,11 @@ hello() ->
 % io:format("Add Results(~p) ~n", [AddResults2]),
 
 % % Read from the Aerospike Server
-% GetResults2 = aerospike:lsetGetAll( C, NS, Set, Key, Ldt, 0),
-% io:format("Get Results(~p) ~n", [GetResults2]),
+  GetResults2 = aerospike:lsetGetAll( C, NS, Set, Key, Ldt, 0),
+  io:format("Get Results(~p) ~n", [GetResults2]),
+
+    GetSize1 = aerospike:lsetSize( C, NS, Set, Key, Ldt, 0),
+    io:format("Size Results(~p) ~n", [GetSize1]),
 
 % % Delete from the Aerospike Server
 % aerospike:delete( C, NS, Set, Key, 0 ),
@@ -80,6 +87,9 @@ hello() ->
 
 %   addList( C, NS, Set, Key, Ldt, MyRecord1, WriteOps, 0),
 %   io:format("AddList Done 2 ~n"),
+
+    GetSize2 = aerospike:lsetSize( C, NS, Set, Key, Ldt, 0),
+    io:format("Size Results(~p) ~n", [GetSize2]),
 
     delList( C, NS, Set, Key, Ldt, MyRecord1, WriteOps, 0),
     io:format("DelList Done 2 ~n"),

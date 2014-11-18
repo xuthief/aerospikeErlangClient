@@ -127,28 +127,52 @@ do_lset_example(config *c)
     citrusleaf_object_init_str(&o_val3, "lset value3");
     char ldt_name[] = "mylset";
 
+    cl_bin *cl_v = 0;
+    uint32_t generation;
+    int 	cl_v_len;
+    int     expected_len = 0;
+
     // set a non-default write parameter
     cl_write_parameters cl_wp;
     cl_write_parameters_set_default(&cl_wp);
     cl_wp.timeout_ms = 1000;
 
+    if (0 != (rv = citrusleaf_lset_size(c->asc, c->ns, c->set, &o_key, ldt_name, &cl_v_len, c->timeout_ms, &generation))) {
+        fprintf(stderr, "get after put failed, but there should be a key here - %d\n",rv);
+    }
+    fprintf(stderr, "get all returned %d bins (should be %d)\n",cl_v_len, expected_len);
+
     if (0 != (rv = citrusleaf_lset_add(c->asc, c->ns, c->set, &o_key, ldt_name, &o_val, &cl_wp))) {
         fprintf(stderr, "citrusleaf lset add failed: error %d\n",rv);
     } else {
         fprintf(stderr, "citrusleaf lset add succeeded\n");
+        expected_len ++;
     }
 
     if (0 != (rv = citrusleaf_lset_add(c->asc, c->ns, c->set, &o_key, ldt_name, &o_val2, &cl_wp))) {
         fprintf(stderr, "citrusleaf lset add failed: error %d\n",rv);
     } else {
         fprintf(stderr, "citrusleaf lset add succeeded\n");
+        expected_len ++;
     }
+
+    if (0 != (rv = citrusleaf_lset_size(c->asc, c->ns, c->set, &o_key, ldt_name, &cl_v_len, c->timeout_ms, &generation))) {
+        fprintf(stderr, "get after put failed, but there should be a key here - %d\n",rv);
+    }
+    fprintf(stderr, "get all returned %d bins (should be %d)\n",cl_v_len, expected_len);
 
     // Delete the key you just set
     if (0 != (rv = citrusleaf_delete(c->asc, c->ns, c->set, &o_key, 0/*default write params*/))) {
         fprintf(stderr, "citrusleaf delete failed: error %d\n",rv);
+    } else {
+        fprintf(stderr, "citrusleaf delete succeeded\n");
+        expected_len = 0;
     }
-    fprintf(stderr, "citrusleaf delete succeeded\n");
+
+    if (0 != (rv = citrusleaf_lset_size(c->asc, c->ns, c->set, &o_key, ldt_name, &cl_v_len, c->timeout_ms, &generation))) {
+        fprintf(stderr, "get after put failed, but there should be a key here - %d\n",rv);
+    }
+    fprintf(stderr, "get all returned %d bins (should be %d)\n",cl_v_len, expected_len);
 
 #define COUNT (600)
     char val_buf[COUNT + 1];
@@ -166,13 +190,16 @@ do_lset_example(config *c)
             fprintf(stderr, "citrusleaf lset add failed for %d: error %d\n",i, rv);
         } else {
             fprintf(stderr, "citrusleaf lset add succeeded\n");
+            expected_len ++;
         }
     }
 
+    if (0 != (rv = citrusleaf_lset_size(c->asc, c->ns, c->set, &o_key, ldt_name, &cl_v_len, c->timeout_ms, &generation))) {
+        fprintf(stderr, "get after put failed, but there should be a key here - %d\n",rv);
+    }
+    fprintf(stderr, "get all returned %d bins (should be %d)\n",cl_v_len, expected_len);
+
     // Get all the values in this key (enjoy the fine c99 standard)
-    cl_bin *cl_v = 0;
-    uint32_t generation;
-    int 	cl_v_len;
     if (0 != (rv = citrusleaf_lset_scan(c->asc, c->ns, c->set, &o_key, ldt_name, &cl_v, &cl_v_len, c->timeout_ms, &generation))) {
         fprintf(stderr, "get after put failed, but there should be a key here - %d\n",rv);
         if (cl_v)	free(cl_v);

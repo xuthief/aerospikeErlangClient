@@ -49,5 +49,6 @@ GW_RC gw_stopwatch_start();
 GW_RC gw_stopwatch_stop(time_t *time_lapsed, int *nwrite, int *nread);
 GW_RC gw_stopwatch_report(time_t *time_lapsed, int *nwrite, int *nread);
 GW_RC gw_lset_add(int con_h, char *ns, char *set, cl_object *key, char *ldt, cl_object *val, cl_write_parameters *cl_w_p, int *cl_rc);
-GW_RC gw_lset_scan(int con_h, char *ns, char *set, cl_object *key, char* ldt, cl_bin **bins, int *n_bins, int timeout_ms, int *cl_rc);
 GW_RC gw_lset_remove(int con_h, char *ns, char *set, cl_object *key, char *ldt, cl_object *val, cl_write_parameters *cl_w_p, int *cl_rc);
+GW_RC gw_lset_scan(int con_h, char *ns, char *set, cl_object *key, char* ldt, cl_bin **bins, int *n_bins, int timeout_ms, int *cl_rc);
+GW_RC gw_lset_size(int con_h, char *ns, char *set, cl_object *key, char* ldt, int *n_bins, int timeout_ms, int *cl_rc);

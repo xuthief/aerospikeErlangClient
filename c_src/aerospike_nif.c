@@ -2407,7 +2407,6 @@ lset_remove7_nif(ErlNifEnv* envp, int argc, const ERL_NIF_TERM argv[])
   return util_make_return_term_by_rc(envp, gw_rc, cl_rc);
 } // end lset_remove7_nif()
 
-
 /**
  * Do the Erlang NIF to Citrusleaf Parameter translation and then call
  * the actual Citrusleaf_getall() function.  Perform the reverse translation
@@ -2498,6 +2497,94 @@ lset_scan6_nif(ErlNifEnv* envp, int argc, const ERL_NIF_TERM argv[])
   return term_result;
 } // end lset_scan6()
 
+/**
+ * Do the Erlang NIF to Citrusleaf Parameter translation and then call
+ * the actual Citrusleaf_getall() function.  Perform the reverse translation
+ * of the answers (CL to NIF).
+ *
+ * Note that there are two different return codes -- one is for the gateway
+ * function (GW RC), which returns "error" up to the client if something
+ * really bad happens (usually, internally), and the other is for the
+ * Citrusleaf Client function (CL RC), which returns "citrusleaf_error".
+ * So, if nothing really terrible happens in the GW function, it always
+ * returns GW_OK, and any citrusleaf error code is passed along.
+ * If something really bad happens, then the citrusleaf code is ignored
+ * and the internal "error" is passed up.
+ */
+static ERL_NIF_TERM
+lset_size6_nif(ErlNifEnv* envp, int argc, const ERL_NIF_TERM argv[])
+{
+  int con_h;
+  char ns[NSNAME_MAX+1];
+  char set[SETNAME_MAX+1];
+  char ldt[LDT_MAX+1];
+  cl_object key_obj;
+  unsigned timeout_ms;
+
+  ns[NSNAME_MAX] = '\0';
+  set[SETNAME_MAX] = '\0';
+  ldt[LDT_MAX] = '\0';
+
+  static char * meth = "getall5()";
+  if(TRA_ENTER) fprintf(stderr,"%s[%s]: argc(%d)\n",D_ENTER,meth,argc);
+
+  // this takes care of the first 4 parms
+  if( TRA_DEBUG) {
+    fprintf(stderr, "%s[%s]: Argument Examination\n", D_DEBUG, meth );
+    util_show_all_args( meth, envp, argc, argv );
+  }
+
+  char* parm_error_msg =
+    util_extract_common_lead_parms(envp, argc, argv, &con_h, ns, set, &key_obj);
+  if (parm_error_msg) {
+    return util_make_error_tuple(envp, parm_error_msg);
+  }
+
+  // 5th parm is ldt 
+  // first try the search criteria as string, then try as an atom
+  // note: enif_get_string and enif_get_atom will return byte count read,
+  // including the null byte
+  int len;
+  len = enif_get_string(envp, argv[4], ldt, LDT_MAX, ERL_NIF_LATIN1);
+  if (!len) {
+    len = enif_get_atom(envp, argv[4], ldt, LDT_MAX, ERL_NIF_LATIN1);
+    if (!len) {
+      return "LDT must be a string or an atom";
+    }
+  }
+  if( TRA_DEBUG ) {
+    fprintf(stderr, "%s[%s]:LDT(%s) OK: Next check Add Value\n",
+    D_DEBUG, meth, ldt);
+  }
+
+  // 6th parm is timeout_ms
+  if (!enif_get_uint(envp, argv[5], &timeout_ms)) {
+    return util_make_error_tuple(envp, "Timeout value is bad");
+  }
+
+  ERL_NIF_TERM term_result;
+  int n_bins;
+  int cl_rc;
+  GW_RC gw_rc =
+    gw_lset_size(con_h, ns, set, &key_obj, ldt, &n_bins, timeout_ms, &cl_rc);
+
+  if ((GW_OK == gw_rc) && (CITRUSLEAF_OK == cl_rc)) {
+    if(TRA_DEBUG) fprintf(stderr, "%s[%s]: Get returns OK\n", D_DEBUG, meth);
+    // All good -- create the Results Tuple
+    // term_result = util_convert_cl_bin_to_list(envp, bins, n_bins);
+    term_result = enif_make_long(envp, n_bins);
+  } else {
+    if(TRA_DEBUG) fprintf(stderr, "%s[%s]: Get Bad: GW RC(%d) CL RC(%d)\n",
+        D_DEBUG, meth, gw_rc, cl_rc );
+    // Not good -- create the Error Response Tuple
+    term_result = util_make_return_term_by_rc(envp, gw_rc, cl_rc);
+  }
+
+  citrusleaf_object_free(&key_obj);
+
+  return term_result;
+} // end lset_size6()
+
 
 
 // Show the set of NIF functions that are defined in this module.
@@ -2523,6 +2610,7 @@ static ErlNifFunc nif_funcs[] = {
         ,{"lsetAdd",    7, lset_add7_nif}
         ,{"lsetDelete", 7, lset_remove7_nif}
         ,{"lsetGetAll", 6, lset_scan6_nif}
+        ,{"lsetSize",   6, lset_size6_nif}
 };
 
 //
